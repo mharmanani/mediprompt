@@ -1,0 +1,10 @@
+prompt Diagnose(im_id, region, modality)
+    pathology: 'cancer'
+endprompt
+
+prompt Segment(im_id, region, modality)
+endprompt
+    
+run llama on Diagnose(2147, 'prostate', 'mri')
+run llama on Diagnose(86, 'breast', 'ultrasound')
+run medsam on Segment(118, 'breast', 'ultrasound')

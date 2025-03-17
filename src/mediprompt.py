@@ -32,6 +32,7 @@ class MediPrompt:
         if match:
             name, params = match.groups()
             self.context[name] = {p.strip(): None for p in params.split(",")}
+            print(self.context)
             print(f"[INFO] Defined prompt: {name} with params {params}")
 
     def handle_task(self, line: str):

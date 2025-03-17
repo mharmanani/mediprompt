@@ -1,0 +1,6 @@
+prompt Diagnose(im_id, region, modality)
+    task segment::'lesion'()
+    task diagnose::'cancer'()
+
+Diagnose(5, 'prostate', 'mri')
+Diagnose(5, 'breast', 'ultrasound')
