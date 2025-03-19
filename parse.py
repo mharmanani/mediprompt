@@ -1,63 +1,29 @@
-"""
-INPUT STRING:
-prompt Diagnose(im_id, region, modality)
-    task segment::'lesion'()
-    task diagnose::'cancer'()
-
-run llama with Diagnose(2147, 'prostate', 'mri')
-run llama with Diagnose(115, 'breast', 'ultrasound')
-
-Actions:
-    * Load image id 2147 into memory (using e.g. numpy, PIL, etc.)
-    * Declare an empty list prompts=[]
-    * Declare an empty list commands=[]
-    * Declare a dictionary CONTEXT={}
-
-    * Parse the 'prompt' line and store the prompt name and parameters in the CONTEXT dictionary
-    * Parse the 'task' lines and execute the corresponding task function, storing the result in the CONTEXT dictionary
-    * Parse the 'action' lines and execute the corresponding action function
-
-Output:
-prompts = {2147:"Diagnose prostate cancer in this MRI image of the prostate", 
-            115:"Diagnose breast cancer in this ultrasound image"}
-
-for id in (2147, 86):
-    img = load_image(id)
-    # run llama on img with prompt in prompts
-    y = run_llama(img, prompt[img])
-    print(y)
-"""
-
-script = """
-prompt Diagnose(im_id, region, modality)
-    pathology: 'cancer'
-endprompt
-
-prompt Segment(im_id, region, modality)
-endprompt
-    
-for im_id=0..200
-    run llama on Diagnose(2147, 'prostate', 'mri')
-"""
-
 import re
 
 task_registry = {}
 CONTEXT = {}
 
-def parse_prompt(prompt_name, params):
-    # look for prompt in the CONTEXT dictionary
-    assert prompt_name in CONTEXT.keys()
-    params_def_list = CONTEXT[prompt_name]
-    prompt_instance = {}
-    for p_id in params_def_list:
-        var_name = params_def_list[p_id]
-        var_value = params[p_id]
-        if var_value.startswith("'") and var_value.endswith("'"):
-            var_value = var_value[1:-1]
-        prompt_instance[var_name] = var_value
+def append_text_to_prompt(prompt_form, text):
+    if len(prompt_form) == 0:
+        return text
+    else:
+        return prompt_form + " " + text
+
+def fill_prompt_form(prompt_name, prompt_form, params):
+    prompt_tokens = prompt_form.split(" ")
+    i = 1 # 1-indexed to skip image id
+    for token in prompt_tokens:
+        if token.startswith("<") and token.endswith(">"):
+            if CONTEXT[prompt_name][i] == token[1:-1]:
+                curr_param = params[i]
+                if curr_param.startswith("'") and curr_param.endswith("'"):
+                    curr_param = curr_param[1:-1]
+                prompt_form = prompt_form.replace(token, curr_param)
+            i += 1
+        else:
+            continue
     
-    return f"{prompt_name} {prompt_instance['region']} cancer in this {prompt_instance['modality']} image"
+    return {params[0]: prompt_form}
 
 def parse_script(script: str):
     prompts = {}
@@ -71,19 +37,51 @@ def parse_script(script: str):
             if match:
                 prompt_name, params = match.groups()
                 CONTEXT[prompt_name] = {i:p.strip() for i, p in enumerate(params.split(","))}
-            
+
+                if len(params) > 0:
+                    try:
+                        assert 'im_id' in CONTEXT[prompt_name].values()
+                        assert 'region' in CONTEXT[prompt_name].values()
+                        assert 'modality' in CONTEXT[prompt_name].values()
+
+                    except AssertionError:
+                        #print(f"Prompt {prompt_name} must have parameters 'im_id', 'region', and 'modality'")
+                        raise SyntaxError(f"Prompt {prompt_name} must have parameters 'im_id', 'region', and 'modality'")
+
+            prompt_form = ''             
             while 'endprompt' not in line:
                 line = lines[line_no+1]
-                print(line, 'endprompt' in line)
-                if line.strip().startswith("\tpathology"):
-                    match = re.match(r"\tpathology:\s*'([^']*)'", line)
+                if line.strip().startswith("pathology"):
+                    match = re.match(r"pathology: \s*'([^']*)'", line.strip())
                     if match:
-                        pathology = match.groups()[0]
-                        prompts[CONTEXT[prompt_name][0]] = f"Diagnose {pathology} cancer in this image"
+                        im_id = CONTEXT[prompt_name][0]
+                        region = CONTEXT[prompt_name][1]
+                        modality = CONTEXT[prompt_name][2]
+                        pathology = match.groups()[0]                        
+                        msg = f"Diagnose <{region}> {pathology} in this <{modality}> image."
+                        prompt_form = append_text_to_prompt(prompt_form, msg)
+                        prompts[prompt_name] = prompt_form
+                        #print(f"Prompt {prompt_name} {region} {pathology} in this image")
+                
+                if line.strip().startswith("target"):
+                    match = re.match(r"target: \s*'([^']*)'", line.strip())
+                    if match:
+                        im_id = CONTEXT[prompt_name][0]
+                        region = CONTEXT[prompt_name][1]
+                        modality = CONTEXT[prompt_name][2]
+                        target = match.groups()[0]                        
+                        msg = f"Diagnose <{region}> {pathology} in this <{modality}> image."
+                        prompt_form = append_text_to_prompt(prompt_form, msg)
+                        prompts[prompt_name] = prompt_form
 
+                if line.strip().startswith("text"):
+                    match = re.match(r"text: \s*'([^']*)'", line.strip())
+                    if match:
+                        text = match.groups()[0]
+                        prompt_form = append_text_to_prompt(prompt_form, text)
+                        prompts[prompt_name] = prompt_form
+                
                 line_no += 1
-
-            print(CONTEXT)
         
         elif line.startswith("task"):
             match = re.match(r"task\s+(\w+)::'([^']*)'\(\)", line)
@@ -94,17 +92,29 @@ def parse_script(script: str):
                     CONTEXT[task_type] = result
                     commands.append(f"Execute task: {task_name}, result: {result}")
 
+        elif line.startswith("show"): # equivalent to printing the prompt
+            tokens = line.strip().split(" ")
+            print(tokens)
+            if len(tokens) != 2:
+                raise SyntaxError("Show command must have exactly 2 tokens")
+            else:
+                prompt_name = tokens[1]
+                if prompt_name in prompts:
+                    commands.append(f"print:{prompts[prompt_name]}")
+                else:
+                    raise ValueError(f"Prompt {prompt_name} not found in prompts")
+
         elif line.startswith("run"):
             # need group forn 'run' token, <model> token, then a prompt (e.g. Diagnose(...))
             match = re.match(r"run (\w+) on (\w+)\(([^)]*)\)", line)
             if match:
                 model, prompt_name, params = match.groups()
                 params = [p.strip().rstrip() for p in params.split(",")]
-                prompt = parse_prompt(prompt_name, params)
-                commands.append(f"Run model {model} with prompt {prompt}")
+                prompt = fill_prompt_form(prompt_name, prompts[prompt_name], params)
+                commands.append(f"Run model {model} with prompts {prompt}")
 
     return prompts, commands
 
-prompts, commands = parse_script(script)
-print(prompts)
-print(commands)
+#prompts, commands = parse_script(script)
+#print(prompts)
+#print(commands)

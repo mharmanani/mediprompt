@@ -1,6 +1,5 @@
-prompt Diagnose(im_id, region, modality)
-    task segment::'lesion'()
-    task diagnose::'cancer'()
+prompt HelloWorld()
+    text: 'Hello, world!'
+endprompt
 
-Diagnose(5, 'prostate', 'mri')
-Diagnose(5, 'breast', 'ultrasound')
+show HelloWorld

@@ -1,10 +1,12 @@
-prompt Diagnose(im_id, region, modality)
+prompt DiagnoseCancer(im_id, region, modality)
     pathology: 'cancer'
 endprompt
 
-prompt Segment(im_id, region, modality)
+prompt SegmentLesions(im_id, region, modality)
+    target: 'lesion'
 endprompt
     
-run llama on Diagnose(2147, 'prostate', 'mri')
-run llama on Diagnose(86, 'breast', 'ultrasound')
-run medsam on Segment(118, 'breast', 'ultrasound')
+for im_id=0..200
+    run llama on DiagnoseCancer(2147, 'prostate', 'mri')
+
+run medsam on SegmentLesions(2147, 'prostate', 'mri')
