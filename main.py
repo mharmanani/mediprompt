@@ -2,7 +2,7 @@ from src.mediprompt import MediPrompt
 from src.utils import sysutils as S
 
 # load hello world script
-script = open("helloprostates.mediprompt").read()
+script = open("example1.mediprompt").read()
 
 # initialize the prompts list
 prompts = []

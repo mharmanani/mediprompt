@@ -5,8 +5,10 @@ endprompt
 prompt SegmentLesions(im_id, region, modality)
     target: 'lesion'
 endprompt
+
+show DiagnoseCancer
     
 for im_id=0..200
-    run llama on DiagnoseCancer(2147, 'prostate', 'mri')
+    run llama on DiagnoseCancer(im_id, 'prostate', 'mri')
 
 run medsam on SegmentLesions(2147, 'prostate', 'mri')

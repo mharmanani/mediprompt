@@ -54,14 +54,17 @@ def parse_script(script: str):
                 if line.strip().startswith("pathology"):
                     match = re.match(r"pathology: \s*'([^']*)'", line.strip())
                     if match:
-                        im_id = CONTEXT[prompt_name][0]
-                        region = CONTEXT[prompt_name][1]
-                        modality = CONTEXT[prompt_name][2]
-                        pathology = match.groups()[0]                        
-                        msg = f"Diagnose <{region}> {pathology} in this <{modality}> image."
-                        prompt_form = append_text_to_prompt(prompt_form, msg)
-                        prompts[prompt_name] = prompt_form
-                        #print(f"Prompt {prompt_name} {region} {pathology} in this image")
+                        params = CONTEXT[prompt_name].values()
+                        try:
+                            im_id = CONTEXT[prompt_name][0]
+                            region = CONTEXT[prompt_name][1]
+                            modality = CONTEXT[prompt_name][2]
+                            pathology = match.groups()[0]                        
+                            msg = f"Diagnose <{region}> {pathology} in this <{modality}> image."
+                            prompt_form = append_text_to_prompt(prompt_form, msg)
+                            prompts[prompt_name] = prompt_form
+                        except KeyError:
+                            raise SyntaxError(f"Must have parameter 'region' to specify pathology")
                 
                 if line.strip().startswith("target"):
                     match = re.match(r"target: \s*'([^']*)'", line.strip())
@@ -94,7 +97,6 @@ def parse_script(script: str):
 
         elif line.startswith("show"): # equivalent to printing the prompt
             tokens = line.strip().split(" ")
-            print(tokens)
             if len(tokens) != 2:
                 raise SyntaxError("Show command must have exactly 2 tokens")
             else:

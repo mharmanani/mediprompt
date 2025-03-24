@@ -1,6 +1,5 @@
 prompt HelloProstates()
     text: 'Hello!'
-    pathology: 'cancer'
 endprompt
 
 show HelloProstates
