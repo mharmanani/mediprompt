@@ -1,0 +1,13 @@
+prompt DiagnoseBreastCancer(im_id, region, modality)
+    pathology: 'cancer'
+    data: BrEaST
+endprompt
+
+run qwen on DiagnoseBreastCancer(0, 'breast', 'ultrasound')
+
+prompt DiagnoseStupidity(im_id, region, modality)
+    pathology: 'cancer'
+    data: wa
+endprompt
+
+run qwen on DiagnoseStupidity(0, 'wa', 'text')

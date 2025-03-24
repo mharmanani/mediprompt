@@ -1,5 +1,7 @@
 import re
+import os
 
+data_registry = {}
 task_registry = {}
 CONTEXT = {}
 
@@ -22,6 +24,15 @@ def fill_prompt_form(prompt_name, prompt_form, params):
             i += 1
         else:
             continue
+    
+    if data_registry != {}:
+        keys = list(data_registry.keys())
+        for k in keys:
+            data_registry.pop(k)
+    
+    if 3 in CONTEXT[prompt_name]: # check presence of data
+        for (k,v) in CONTEXT[prompt_name][3].items():
+            data_registry[k] = v
     
     return {params[0]: prompt_form}
 
@@ -73,9 +84,21 @@ def parse_script(script: str):
                         region = CONTEXT[prompt_name][1]
                         modality = CONTEXT[prompt_name][2]
                         target = match.groups()[0]                        
-                        msg = f"Diagnose <{region}> {pathology} in this <{modality}> image."
+                        msg = f"Segment <{region}> {target} in this <{modality}> image."
                         prompt_form = append_text_to_prompt(prompt_form, msg)
                         prompts[prompt_name] = prompt_form
+
+                if line.strip().startswith("data"):
+                    match = re.match(r"data: \s*([^']*)", line.strip())
+                    if match:
+                        dataset = match.groups()[0]
+                        idx = 0
+                        data_map = {}
+                        for item in os.listdir(f'./data/{dataset}'):
+                            data_map[idx] = f'./data/{dataset}/{item}'
+                            idx += 1
+                        CONTEXT[prompt_name][3] = data_map
+                        print(CONTEXT[prompt_name][3])
 
                 if line.strip().startswith("text"):
                     match = re.match(r"text: \s*'([^']*)'", line.strip())
@@ -95,6 +118,16 @@ def parse_script(script: str):
                     CONTEXT[task_type] = result
                     commands.append(f"Execute task: {task_name}, result: {result}")
 
+        elif line.startswith("data"):
+            match = re.match(r"data\s+(\w+)::'([^']*)'\(\)", line)
+            if match:
+                print(data_type, data_name)
+                data_type, data_name = match.groups()
+                if data_name in task_registry:
+                    result = task_registry[data_name]()
+                    CONTEXT[data_type] = result
+                    commands.append(f"Execute data: {data_name}, result: {result}")
+
         elif line.startswith("show"): # equivalent to printing the prompt
             tokens = line.strip().split(" ")
             if len(tokens) != 2:
@@ -113,9 +146,13 @@ def parse_script(script: str):
                 model, prompt_name, params = match.groups()
                 params = [p.strip().rstrip() for p in params.split(",")]
                 prompt = fill_prompt_form(prompt_name, prompts[prompt_name], params)
-                commands.append(f"Run model {model} with prompts {prompt}")
+                prompt_img = data_registry[int(list(prompt.keys())[0])]
+                prompt_text = list(prompt.values())[0]
+                commands.append(f"run:{model}:{prompt_img}:{prompt_text}")
+            else:
+                raise SyntaxError("Run command must have the format 'run <model> on <prompt>'")
 
-    return prompts, commands
+    return prompts, commands, data_registry
 
 #prompts, commands = parse_script(script)
 #print(prompts)

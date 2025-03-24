@@ -1,0 +1,10 @@
+prompt DiagnoseCancer(im_id, region, modality)
+    pathology: 'cancer'
+endprompt
+
+show DiagnoseCancer
+
+specify BrEaST # cd data/BrEaST
+
+for case_id:0..200
+    run qwen on DiagnoseCancer(case_id, 'breast', 'ultrasound')

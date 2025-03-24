@@ -25,9 +25,11 @@ argparser = argparse.ArgumentParser()
 argparser.add_argument("script", help="The script file to parse")
 args = argparser.parse_args()
 
-prompts, commands = parse_script(script)
+script = open(args.script).read()
+
+prompts, commands, data = parse_script(script)
 
 for command in commands:
     print(f"Executing command: {command}")
-    cmd, args = command.split(":")
-    S.exec_(cmd, args)
+    cmd, *args = command.split(":")
+    S.exec_(cmd, args, data)
