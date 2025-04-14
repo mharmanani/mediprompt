@@ -1,0 +1,13 @@
+export histopathology.log
+prompt HistoPrompt(im_id, region, modality)
+    context
+    describe
+    pathology: 'carcinoma'
+    data: Histo
+    reasoning
+endprompt
+
+show HistoPrompt
+
+for all case_id
+    run Qwen on HistoPrompt(case_id, '', 'histopathology')

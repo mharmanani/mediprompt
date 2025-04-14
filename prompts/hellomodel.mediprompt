@@ -1,0 +1,7 @@
+prompt HelloModel()
+    text: 'Hello, Qwen!'
+endprompt
+
+show HelloModel
+
+run Qwen on HelloModel()

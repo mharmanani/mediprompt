@@ -1,5 +1,0 @@
-prompt HelloProstates()
-    text: 'Hello!'
-endprompt
-
-show HelloProstates

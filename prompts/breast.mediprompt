@@ -1,0 +1,10 @@
+export breast.log
+prompt BreastDiagnosis(im_id, region, modality)
+    context
+    data: BrEaST
+    pathology: 'tumours'
+    text: 'What do you conclude?'
+endprompt
+
+for all case_id
+    run Llama on BreastDiagnosis(case_id, 'breast', 'ultrasound')

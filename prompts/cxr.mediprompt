@@ -1,0 +1,11 @@
+export describe_xr.log
+prompt DescribeXR(im_id, region, modality)
+    context
+    data: CXR
+    describe
+endprompt
+
+show DescribeXR(0, 'chest', 'xray')
+
+for all case_id
+    run Qwen on DescribeXR(case_id, 'chest', 'xray')

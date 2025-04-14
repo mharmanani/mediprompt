@@ -1,14 +1,19 @@
 import torch
 import numpy as np
 
-from transformers import Qwen2_5_VLForConditionalGeneration, AutoTokenizer, AutoProcessor
+from transformers import AutoModel, AutoTokenizer, AutoProcessor
 from qwen_vl_utils import process_vision_info
 
-class Qwen:
+class InternVL:
     def __init__(self, size=3, min_px=256, max_px=1280):
-        self.model = Qwen2_5_VLForConditionalGeneration.from_pretrained(
-            f"Qwen/Qwen2.5-VL-{size}B-Instruct", torch_dtype="auto", device_map="auto"
-        )
+        self.model = AutoModel.from_pretrained("OpenGVLab/InternVL2_5-4B",
+                torch_dtype=torch.bfloat16,
+                low_cpu_mem_usage=True,
+                load_in_8bit=True,
+                low_cpu_mem_usage=True,
+                use_flash_attn=True,
+                trust_remote_code=True).eval().cuda()
+            
 
         # default processer
         min_pixels = min_px*28*28

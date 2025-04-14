@@ -1,0 +1,14 @@
+export brain.log
+prompt BrainMR(im_id, region, modality)
+    context
+    describe
+    data: Brain
+endprompt
+
+show BrainMR(0, 'brain', 'mri')
+
+run Qwen on BrainMR(0, 'brain', 'mri')
+
+show BrainMR(0, '[?]', '[?]')
+
+run Qwen on BrainMR(0, '[?]', '[?]')
