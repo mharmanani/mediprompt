@@ -1,3 +1,4 @@
+# MediPrompt: A Domain Specific Language for Prompting Medical Foundation Models
 **MediPrompt** is a domain-specific language (DSL) for building and executing structured prompts for vision-language models (VLMs) in clinical imaging tasks. It allows users—especially those without programming or AI expertise—to define reusable, interpretable, and data-aware prompts for medical image analysis.
 
 ## Features
