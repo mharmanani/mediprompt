@@ -73,16 +73,8 @@ If you use MediPrompt in your research, please cite:
 ```
 @inprogress{mediprompt2025,
   title = {MediPrompt: A Prompt Programming Language for Clinical Vision-Language Tasks},
-  author = {Author et al.},
+  author = {M. Harmanani and B. Long},
   year = {2025},
   journal = {In submission}
 }
 ```
-
-## License
-
-MIT License
-
----
-
-Let me know if you'd like a shorter version or one targeted at a different audience (e.g. for clinicians, developers, or researchers).
