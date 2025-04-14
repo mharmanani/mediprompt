@@ -10,8 +10,7 @@ class Mistral:
         self.model = AutoModelForCausalLM.from_pretrained(
             model_name,
             torch_dtype=torch.bfloat16,
-            device_map="auto",
-            token="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"
+            device_map="auto"
         )
 
         # default processer
